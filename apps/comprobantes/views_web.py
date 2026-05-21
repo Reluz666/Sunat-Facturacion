@@ -23,6 +23,8 @@ def dashboard_view(request):
     """Dashboard principal con resumen del mes."""
     hoy = timezone.now()
     qs = Comprobante.objects.filter(empresa=request.user.empresa) if request.user.empresa else Comprobante.objects.none()
+    if request.user.is_emisor:
+        qs = qs.filter(created_by=request.user)
     mes_qs = qs.filter(fecha_emision__month=hoy.month, fecha_emision__year=hoy.year)
 
     stats = {
@@ -123,21 +125,25 @@ def lista_comprobantes_view(request):
 
 @login_required
 def detalle_comprobante_view(request, pk):
-    """Vista previa del comprobante estilo voucher."""
-    comprobante = get_object_or_404(
-        Comprobante.objects.select_related('cliente', 'empresa').prefetch_related('detalles__producto', 'logs_envio'),
-        pk=pk
-    )
+    qs = Comprobante.objects.select_related('cliente', 'empresa').prefetch_related('detalles__producto', 'logs_envio')
+    if request.user.empresa:
+        qs = qs.filter(empresa=request.user.empresa)
+    if request.user.is_emisor:
+        qs = qs.filter(created_by=request.user)
+    
+    comprobante = get_object_or_404(qs, pk=pk)
     return render(request, 'comprobantes/detalle.html', {'comprobante': comprobante})
 
 
 @login_required
 def pdf_comprobante_view(request, pk):
-    """Descargar PDF del comprobante."""
-    comprobante = get_object_or_404(
-        Comprobante.objects.select_related('cliente', 'empresa').prefetch_related('detalles__producto'),
-        pk=pk
-    )
+    qs = Comprobante.objects.select_related('cliente', 'empresa').prefetch_related('detalles__producto')
+    if request.user.empresa:
+        qs = qs.filter(empresa=request.user.empresa)
+    if request.user.is_emisor:
+        qs = qs.filter(created_by=request.user)
+    
+    comprobante = get_object_or_404(qs, pk=pk)
     pdf_buffer = generar_pdf_comprobante(comprobante)
     response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename="{comprobante.serie_numero}.pdf"'
@@ -188,7 +194,13 @@ def reenviar_comprobante_view(request, pk):
         messages.error(request, 'No tiene permisos para reenviar comprobantes.')
         return redirect('dashboard')
         
-    comprobante = get_object_or_404(Comprobante, pk=pk)
+    qs = Comprobante.objects.all()
+    if request.user.empresa:
+        qs = qs.filter(empresa=request.user.empresa)
+    if request.user.is_emisor:
+        qs = qs.filter(created_by=request.user)
+        
+    comprobante = get_object_or_404(qs, pk=pk)
     try:
         reenviar_comprobante(comprobante)
         messages.success(request, f'Comprobante {comprobante.serie_numero} reenviado. Nuevo estado: {comprobante.estado}')
@@ -221,7 +233,13 @@ def buscar_comprobante_api(request):
     try:
         serie = parts[0]
         numero = int(parts[1])
-        comp = Comprobante.objects.select_related('cliente').get(serie=serie, numero=numero)
+        qs = Comprobante.objects.select_related('cliente')
+        if request.user.empresa:
+            qs = qs.filter(empresa=request.user.empresa)
+        if request.user.is_emisor:
+            qs = qs.filter(created_by=request.user)
+            
+        comp = qs.get(serie=serie, numero=numero)
         return JsonResponse({
             'found': True,
             'id': comp.id,
