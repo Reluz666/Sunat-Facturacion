@@ -1,9 +1,10 @@
 from django.db import models
 from django.core.validators import RegexValidator, MinLengthValidator
 from django.core.exceptions import ValidationError
+from apps.utils.models import ModeloBase
 
 
-class Cliente(models.Model):
+class Cliente(ModeloBase):
     """
     Cliente receptor de comprobantes electrónicos.
     Validación según tipo de documento:
@@ -29,8 +30,6 @@ class Cliente(models.Model):
     razon_social = models.CharField(max_length=200, verbose_name='Razón Social / Nombre')
     direccion = models.TextField(blank=True, verbose_name='Dirección')
     email = models.EmailField(blank=True, verbose_name='Correo Electrónico')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'Cliente'

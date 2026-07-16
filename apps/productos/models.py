@@ -1,9 +1,10 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from apps.utils.models import ModeloBase
 
 
-class Producto(models.Model):
+class Producto(ModeloBase):
     """
     Producto o servicio que puede incluirse en un comprobante.
     El flag afecto_igv determina si se aplica el IGV (18%) al producto.
@@ -42,9 +43,6 @@ class Producto(models.Model):
         verbose_name='Afecto a IGV',
         help_text='Si está marcado, se calcula IGV (18%) sobre este producto.'
     )
-    activo = models.BooleanField(default=True, verbose_name='Activo')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'Producto'

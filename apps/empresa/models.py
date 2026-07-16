@@ -1,8 +1,9 @@
 from django.db import models
 from django.core.validators import RegexValidator
+from apps.utils.models import ModeloBase
 
 
-class Empresa(models.Model):
+class Empresa(ModeloBase):
     """
     Empresa emisora de comprobantes electrónicos.
     Cada empresa tiene un RUC único y puede tener múltiples series.
@@ -27,8 +28,6 @@ class Empresa(models.Model):
         default='GENERAL',
         verbose_name='Régimen Tributario'
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'Empresa'
@@ -39,7 +38,7 @@ class Empresa(models.Model):
         return f"{self.razon_social} ({self.ruc})"
 
 
-class SerieComprobante(models.Model):
+class SerieComprobante(ModeloBase):
     """
     Serie de numeración para comprobantes electrónicos.
     Cada empresa puede tener múltiples series por tipo de comprobante.
@@ -65,7 +64,7 @@ class SerieComprobante(models.Model):
     )
     serie = models.CharField(
         max_length=4,
-        validators=[RegexValidator(r'^[A-Z]\d{3}$', 'La serie debe ser una letra seguida de 3 dígitos (ej: F001).')],
+        validators=[RegexValidator(r'^[A-Z]\w{3}$', 'La serie debe ser una letra seguida de 3 caracteres (ej: F001).')],
         verbose_name='Serie'
     )
     correlativo_actual = models.PositiveIntegerField(

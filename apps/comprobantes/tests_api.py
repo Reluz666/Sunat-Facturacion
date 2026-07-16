@@ -50,6 +50,8 @@ class TestComprobanteAPI(TestCase):
             'detalles': [{'producto_id': self.producto.id, 'cantidad': 5, 'precio_unitario': 100, 'descuento': 0}],
         }
         response = self.client.post('/api/facturas/', data, format='json')
+        if response.status_code != status.HTTP_201_CREATED:
+            print(response.json())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['serie'], 'F001')
         self.assertEqual(Decimal(response.data['subtotal']), Decimal('500.00'))

@@ -9,7 +9,7 @@ from .forms import EmpresaForm
 @login_required
 def lista_empresas_view(request):
     """Listado de empresas del sistema."""
-    empresas = Empresa.objects.all()
+    empresas = Empresa.activos.all()
     return render(request, 'empresa/lista.html', {'empresas': empresas})
 
 

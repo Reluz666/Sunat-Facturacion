@@ -47,7 +47,7 @@ class ComprobanteDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'serie', 'numero', 'serie_numero', 'tipo', 'fecha_emision',
                   'cliente', 'cliente_nombre', 'empresa', 'subtotal', 'total_inafecto',
                   'igv', 'total', 'estado', 'xml_firmado', 'hash_cpe',
-                  'detalles', 'logs_envio', 'created_at']
+                  'detalles', 'logs_envio', 'creado_en']
 
 
 class DetalleInputSerializer(serializers.Serializer):

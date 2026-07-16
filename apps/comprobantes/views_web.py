@@ -10,8 +10,14 @@ from decimal import Decimal
 import json
 
 from .models import Comprobante, DetalleComprobante
-from .services import emitir_comprobante, emitir_nota_credito
-from .sunat_client import reenviar_comprobante
+from dominio.comprobantes.servicios import FacturaService, BoletaService, NotaCreditoService
+from dominio.comprobantes.excepciones import ComprobanteException
+from dominio.comprobantes.entidades import Cliente as DominioCliente, Empresa as DominioEmpresa
+from infraestructura.persistencia.comprobante_repo import (
+    DjangoComprobanteRepository, DjangoNumeracionRepository, DjangoProductoRepository
+)
+from infraestructura.sunat.cliente_ose import DjangoSunatClient
+from infraestructura.sunat.cliente_ose import DjangoSunatClient
 from .pdf_generator import generar_pdf_comprobante
 from apps.clientes.models import Cliente
 from apps.productos.models import Producto
@@ -24,7 +30,7 @@ def dashboard_view(request):
     hoy = timezone.now()
     qs = Comprobante.objects.filter(empresa=request.user.empresa) if request.user.empresa else Comprobante.objects.none()
     if request.user.is_emisor:
-        qs = qs.filter(created_by=request.user)
+        qs = qs.filter(creado_por=request.user)
     mes_qs = qs.filter(fecha_emision__month=hoy.month, fecha_emision__year=hoy.year)
 
     stats = {
@@ -61,14 +67,44 @@ def emitir_comprobante_view(request):
             cliente_id = data.get('cliente_id')
             detalles = data.get('detalles', [])
 
-            cliente = Cliente.objects.get(id=cliente_id)
-            comprobante = emitir_comprobante(
-                empresa=request.user.empresa,
-                cliente=cliente,
-                tipo=tipo,
-                detalles_data=detalles,
-                usuario=request.user,
+            cliente_django = Cliente.objects.get(id=cliente_id)
+            cliente_domain = DominioCliente(
+                id=cliente_django.id, tipo_doc=cliente_django.tipo_doc,
+                num_doc=cliente_django.num_doc, razon_social=cliente_django.razon_social,
+                direccion=cliente_django.direccion, email=cliente_django.email
             )
+            empresa_django = request.user.empresa
+            empresa_domain = DominioEmpresa(
+                id=empresa_django.id, ruc=empresa_django.ruc,
+                razon_social=empresa_django.razon_social, nombre_comercial=empresa_django.nombre_comercial,
+                direccion=empresa_django.direccion, regimen_tributario=empresa_django.regimen_tributario
+            )
+            
+            comp_repo = DjangoComprobanteRepository()
+            num_repo = DjangoNumeracionRepository()
+            prod_repo = DjangoProductoRepository()
+            sunat_client = DjangoSunatClient(comp_repo)
+
+            if tipo == Comprobante.TipoComprobante.FACTURA:
+                comprobante = FacturaService.emitir(
+                    empresa=empresa_domain,
+                    cliente=cliente_domain,
+                    detalles_data=detalles,
+                    usuario_id=request.user.id,
+                    comp_repo=comp_repo, num_repo=num_repo,
+                    prod_repo=prod_repo, sunat_client=sunat_client
+                )
+            elif tipo == Comprobante.TipoComprobante.BOLETA:
+                comprobante = BoletaService.emitir(
+                    empresa=empresa_domain,
+                    cliente=cliente_domain,
+                    detalles_data=detalles,
+                    usuario_id=request.user.id,
+                    comp_repo=comp_repo, num_repo=num_repo,
+                    prod_repo=prod_repo, sunat_client=sunat_client
+                )
+            else:
+                raise ValueError("Tipo de comprobante no soportado.")
             return JsonResponse({
                 'success': True,
                 'message': f'Comprobante {comprobante.serie_numero} emitido correctamente.',
@@ -76,7 +112,12 @@ def emitir_comprobante_view(request):
                 'serie_numero': comprobante.serie_numero,
                 'estado': comprobante.estado,
             })
+        except ComprobanteException as e:
+            print(f"COMPROBANTE EXCEPTION: {e}")
+            return JsonResponse({'success': False, 'error': str(e), 'codigo': getattr(e, 'codigo_error', 'ERR_DESCONOCIDO')}, status=400)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
     productos = Producto.objects.filter(activo=True)
@@ -90,7 +131,7 @@ def lista_comprobantes_view(request):
     if request.user.empresa:
         qs = qs.filter(empresa=request.user.empresa)
     if request.user.is_emisor:
-        qs = qs.filter(created_by=request.user)
+        qs = qs.filter(creado_por=request.user)
 
     # Filtros
     tipo = request.GET.get('tipo')
@@ -134,7 +175,7 @@ def detalle_comprobante_view(request, pk):
     if request.user.empresa:
         qs = qs.filter(empresa=request.user.empresa)
     if request.user.is_emisor:
-        qs = qs.filter(created_by=request.user)
+        qs = qs.filter(creado_por=request.user)
     
     comprobante = get_object_or_404(qs, pk=pk)
     return render(request, 'comprobantes/detalle.html', {'comprobante': comprobante})
@@ -146,7 +187,7 @@ def pdf_comprobante_view(request, pk):
     if request.user.empresa:
         qs = qs.filter(empresa=request.user.empresa)
     if request.user.is_emisor:
-        qs = qs.filter(created_by=request.user)
+        qs = qs.filter(creado_por=request.user)
     
     comprobante = get_object_or_404(qs, pk=pk)
     pdf_buffer = generar_pdf_comprobante(comprobante)
@@ -162,7 +203,7 @@ def descargar_xml_view(request, pk):
     if request.user.empresa:
         qs = qs.filter(empresa=request.user.empresa)
     if request.user.is_emisor:
-        qs = qs.filter(created_by=request.user)
+        qs = qs.filter(creado_por=request.user)
     
     comprobante = get_object_or_404(qs, pk=pk)
     if not comprobante.xml_firmado:
@@ -186,21 +227,40 @@ def nota_credito_view(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            comp_ref = Comprobante.objects.get(id=data['comprobante_referencia_id'])
-            comprobante_nc, nota = emitir_nota_credito(
-                empresa=request.user.empresa,
-                comprobante_ref=comp_ref,
+            empresa_django = request.user.empresa
+            empresa_domain = DominioEmpresa(
+                id=empresa_django.id, ruc=empresa_django.ruc,
+                razon_social=empresa_django.razon_social, nombre_comercial=empresa_django.nombre_comercial,
+                direccion=empresa_django.direccion, regimen_tributario=empresa_django.regimen_tributario
+            )
+            
+            comp_repo = DjangoComprobanteRepository()
+            num_repo = DjangoNumeracionRepository()
+            sunat_client = DjangoSunatClient(comp_repo)
+            
+            comp_ref_domain = comp_repo.obtener_comprobante_por_id(data['comprobante_referencia_id'])
+
+            comprobante_nc, nota = NotaCreditoService.emitir(
+                empresa=empresa_domain,
+                comprobante_ref=comp_ref_domain,
                 motivo=data['motivo'],
                 tipo_nota=data['tipo_nota'],
                 monto_afectado=data['monto_afectado'],
-                usuario=request.user,
+                usuario_id=request.user.id,
+                comp_repo=comp_repo, num_repo=num_repo,
+                sunat_client=sunat_client
             )
             return JsonResponse({
                 'success': True,
                 'message': f'Nota de Crédito {comprobante_nc.serie_numero} emitida correctamente.',
                 'comprobante_id': comprobante_nc.id,
             })
+        except ComprobanteException as e:
+            print(f"COMPROBANTE EXCEPTION NC: {e}")
+            return JsonResponse({'success': False, 'error': str(e), 'codigo': getattr(e, 'codigo_error', 'ERR_DESCONOCIDO')}, status=400)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
     return render(request, 'comprobantes/nota_credito.html', {
@@ -221,14 +281,21 @@ def reenviar_comprobante_view(request, pk):
     if request.user.empresa:
         qs = qs.filter(empresa=request.user.empresa)
     if request.user.is_emisor:
-        qs = qs.filter(created_by=request.user)
+        qs = qs.filter(creado_por=request.user)
         
     comprobante = get_object_or_404(qs, pk=pk)
     try:
-        reenviar_comprobante(comprobante)
-        messages.success(request, f'Comprobante {comprobante.serie_numero} reenviado. Nuevo estado: {comprobante.estado}')
+        comp_repo = DjangoComprobanteRepository()
+        sunat_client = DjangoSunatClient(comp_repo)
+        
+        comp_domain = comp_repo.obtener_comprobante_por_id(comprobante.id)
+        sunat_client.enviar_comprobante(comp_domain)
+        
+        messages.success(request, f'Comprobante {comprobante.serie_numero} reenviado. Nuevo estado: {comp_domain.estado}')
+    except ComprobanteException as e:
+        messages.error(request, f'No se pudo reenviar: {str(e)}')
     except Exception as e:
-        messages.error(request, str(e))
+        messages.error(request, f'No se pudo reenviar: {str(e)}')
     return redirect('comprobante-detalle', pk=pk)
 
 
@@ -260,7 +327,7 @@ def buscar_comprobante_api(request):
         if request.user.empresa:
             qs = qs.filter(empresa=request.user.empresa)
         if request.user.is_emisor:
-            qs = qs.filter(created_by=request.user)
+            qs = qs.filter(creado_por=request.user)
             
         comp = qs.get(serie=serie, numero=numero)
         return JsonResponse({

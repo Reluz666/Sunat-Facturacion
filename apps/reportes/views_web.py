@@ -22,7 +22,7 @@ def libro_ventas_view(request):
     if request.user.empresa:
         qs = qs.filter(empresa=request.user.empresa)
     if request.user.is_emisor:
-        qs = qs.filter(created_by=request.user)
+        qs = qs.filter(creado_por=request.user)
 
     qs = qs.filter(fecha_emision__month=int(mes), fecha_emision__year=int(anio))
     comprobantes = qs.order_by('fecha_emision', 'serie', 'numero')
@@ -77,7 +77,7 @@ def exportar_excel_view(request):
     if request.user.empresa:
         qs = qs.filter(empresa=request.user.empresa)
     if request.user.is_emisor:
-        qs = qs.filter(created_by=request.user)
+        qs = qs.filter(creado_por=request.user)
     if mes and anio:
         qs = qs.filter(fecha_emision__month=int(mes), fecha_emision__year=int(anio))
 

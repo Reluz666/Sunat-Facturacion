@@ -11,9 +11,14 @@ from .serializers import (
     ComprobanteListSerializer, ComprobanteDetailSerializer,
     EmitirComprobanteSerializer, NotaCreditoInputSerializer,
 )
+from dominio.comprobantes.excepciones import ComprobanteException
 from .filters import ComprobanteFilter
-from .services import emitir_comprobante, emitir_nota_credito
-from .sunat_client import reenviar_comprobante
+from dominio.comprobantes.servicios import FacturaService, BoletaService, NotaCreditoService
+from dominio.comprobantes.entidades import Cliente as DominioCliente, Empresa as DominioEmpresa
+from infraestructura.persistencia.comprobante_repo import (
+    DjangoComprobanteRepository, DjangoNumeracionRepository, DjangoProductoRepository
+)
+from infraestructura.sunat.cliente_ose import DjangoSunatClient
 from .pdf_generator import generar_pdf_comprobante
 from apps.clientes.models import Cliente
 from apps.accounts.permissions import IsEmisor, IsEmisorOrContador
@@ -29,20 +34,45 @@ class FacturaCreateView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            cliente = Cliente.objects.get(id=serializer.validated_data['cliente_id'])
-            comprobante = emitir_comprobante(
-                empresa=request.user.empresa,
-                cliente=cliente,
-                tipo=Comprobante.TipoComprobante.FACTURA,
-                detalles_data=serializer.validated_data['detalles'],
-                usuario=request.user,
+            cliente_django = Cliente.objects.get(id=serializer.validated_data['cliente_id'])
+            cliente_domain = DominioCliente(
+                id=cliente_django.id, tipo_doc=cliente_django.tipo_doc,
+                num_doc=cliente_django.num_doc, razon_social=cliente_django.razon_social,
+                direccion=cliente_django.direccion, email=cliente_django.email
             )
+            empresa_django = request.user.empresa
+            empresa_domain = DominioEmpresa(
+                id=empresa_django.id, ruc=empresa_django.ruc,
+                razon_social=empresa_django.razon_social, nombre_comercial=empresa_django.nombre_comercial,
+                direccion=empresa_django.direccion, regimen_tributario=empresa_django.regimen_tributario
+            )
+            
+            comp_repo = DjangoComprobanteRepository()
+            num_repo = DjangoNumeracionRepository()
+            prod_repo = DjangoProductoRepository()
+            sunat_client = DjangoSunatClient(comp_repo)
+
+            comprobante = FacturaService.emitir(
+                empresa=empresa_domain,
+                cliente=cliente_domain,
+                detalles_data=serializer.validated_data['detalles'],
+                usuario_id=request.user.id,
+                comp_repo=comp_repo, num_repo=num_repo,
+                prod_repo=prod_repo, sunat_client=sunat_client
+            )
+            
+            comp_django = Comprobante.objects.get(id=comprobante.id)
             return Response(
-                ComprobanteDetailSerializer(comprobante).data,
+                ComprobanteDetailSerializer(comp_django).data,
                 status=status.HTTP_201_CREATED
             )
+        except ComprobanteException as e:
+            return Response(
+                {'error': str(e), 'codigo': getattr(e, 'codigo_error', 'ERR_DESCONOCIDO')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class BoletaCreateView(APIView):
@@ -55,20 +85,45 @@ class BoletaCreateView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            cliente = Cliente.objects.get(id=serializer.validated_data['cliente_id'])
-            comprobante = emitir_comprobante(
-                empresa=request.user.empresa,
-                cliente=cliente,
-                tipo=Comprobante.TipoComprobante.BOLETA,
-                detalles_data=serializer.validated_data['detalles'],
-                usuario=request.user,
+            cliente_django = Cliente.objects.get(id=serializer.validated_data['cliente_id'])
+            cliente_domain = DominioCliente(
+                id=cliente_django.id, tipo_doc=cliente_django.tipo_doc,
+                num_doc=cliente_django.num_doc, razon_social=cliente_django.razon_social,
+                direccion=cliente_django.direccion, email=cliente_django.email
             )
+            empresa_django = request.user.empresa
+            empresa_domain = DominioEmpresa(
+                id=empresa_django.id, ruc=empresa_django.ruc,
+                razon_social=empresa_django.razon_social, nombre_comercial=empresa_django.nombre_comercial,
+                direccion=empresa_django.direccion, regimen_tributario=empresa_django.regimen_tributario
+            )
+            
+            comp_repo = DjangoComprobanteRepository()
+            num_repo = DjangoNumeracionRepository()
+            prod_repo = DjangoProductoRepository()
+            sunat_client = DjangoSunatClient(comp_repo)
+
+            comprobante = BoletaService.emitir(
+                empresa=empresa_domain,
+                cliente=cliente_domain,
+                detalles_data=serializer.validated_data['detalles'],
+                usuario_id=request.user.id,
+                comp_repo=comp_repo, num_repo=num_repo,
+                prod_repo=prod_repo, sunat_client=sunat_client
+            )
+            
+            comp_django = Comprobante.objects.get(id=comprobante.id)
             return Response(
-                ComprobanteDetailSerializer(comprobante).data,
+                ComprobanteDetailSerializer(comp_django).data,
                 status=status.HTTP_201_CREATED
             )
+        except ComprobanteException as e:
+            return Response(
+                {'error': str(e), 'codigo': getattr(e, 'codigo_error', 'ERR_DESCONOCIDO')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class NotaCreditoCreateView(APIView):
@@ -81,23 +136,42 @@ class NotaCreditoCreateView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            comp_ref = Comprobante.objects.get(
-                id=serializer.validated_data['comprobante_referencia_id']
+            empresa_django = request.user.empresa
+            empresa_domain = DominioEmpresa(
+                id=empresa_django.id, ruc=empresa_django.ruc,
+                razon_social=empresa_django.razon_social, nombre_comercial=empresa_django.nombre_comercial,
+                direccion=empresa_django.direccion, regimen_tributario=empresa_django.regimen_tributario
             )
-            comprobante_nc, nota = emitir_nota_credito(
-                empresa=request.user.empresa,
-                comprobante_ref=comp_ref,
+            
+            comp_repo = DjangoComprobanteRepository()
+            num_repo = DjangoNumeracionRepository()
+            sunat_client = DjangoSunatClient(comp_repo)
+            
+            comp_ref_domain = comp_repo.obtener_comprobante_por_id(serializer.validated_data['comprobante_referencia_id'])
+
+            comprobante_nc, nota = NotaCreditoService.emitir(
+                empresa=empresa_domain,
+                comprobante_ref=comp_ref_domain,
                 motivo=serializer.validated_data['motivo'],
                 tipo_nota=serializer.validated_data['tipo_nota'],
                 monto_afectado=serializer.validated_data['monto_afectado'],
-                usuario=request.user,
+                usuario_id=request.user.id,
+                comp_repo=comp_repo, num_repo=num_repo,
+                sunat_client=sunat_client
             )
+            
+            comp_django = Comprobante.objects.get(id=comprobante_nc.id)
             return Response(
-                ComprobanteDetailSerializer(comprobante_nc).data,
+                ComprobanteDetailSerializer(comp_django).data,
                 status=status.HTTP_201_CREATED
             )
+        except ComprobanteException as e:
+            return Response(
+                {'error': str(e), 'codigo': getattr(e, 'codigo_error', 'ERR_DESCONOCIDO')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ComprobanteListView(generics.ListAPIView):
@@ -111,7 +185,7 @@ class ComprobanteListView(generics.ListAPIView):
         if self.request.user.empresa:
             qs = qs.filter(empresa=self.request.user.empresa)
         if self.request.user.is_emisor:
-            qs = qs.filter(created_by=self.request.user)
+            qs = qs.filter(creado_por=self.request.user)
         return qs
 
 
@@ -131,7 +205,10 @@ class ReenviarView(APIView):
     def post(self, request, pk):
         comprobante = get_object_or_404(Comprobante, pk=pk)
         try:
-            log = reenviar_comprobante(comprobante)
+            comp_repo = DjangoComprobanteRepository()
+            sunat_client = DjangoSunatClient(comp_repo)
+            comp_domain = comp_repo.obtener_comprobante_por_id(comprobante.id)
+            sunat_client.enviar_comprobante(comp_domain)
             comprobante.refresh_from_db()
             return Response(ComprobanteDetailSerializer(comprobante).data)
         except Exception as e:

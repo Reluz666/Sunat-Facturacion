@@ -9,7 +9,7 @@ from .forms import ProductoForm
 @login_required
 def lista_productos_view(request):
     q = request.GET.get('q', '')
-    productos = Producto.objects.all()
+    productos = Producto.activos.all()
     if q:
         from django.db.models import Q
         productos = productos.filter(Q(codigo__icontains=q) | Q(descripcion__icontains=q))
@@ -60,8 +60,7 @@ def eliminar_producto_view(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     if request.method == 'POST':
         try:
-            producto.activo = False
-            producto.save()
+            producto.eliminar(usuario=request.user)
             messages.success(request, 'Producto desactivado.')
         except Exception as e:
             messages.error(request, str(e))

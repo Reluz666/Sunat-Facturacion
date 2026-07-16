@@ -13,7 +13,7 @@ from .forms import ClienteForm
 @login_required
 def lista_clientes_view(request):
     q = request.GET.get('q', '')
-    clientes = Cliente.objects.all()
+    clientes = Cliente.activos.all()
     if q:
         from django.db.models import Q
         clientes = clientes.filter(Q(num_doc__icontains=q) | Q(razon_social__icontains=q))
@@ -77,8 +77,8 @@ def eliminar_cliente_view(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
         try:
-            cliente.delete()
-            messages.success(request, 'Cliente eliminado.')
+            cliente.eliminar(usuario=request.user)
+            messages.success(request, 'Cliente desactivado.')
         except Exception as e:
             messages.error(request, f'No se puede eliminar: {e}')
     return redirect('cliente-lista')

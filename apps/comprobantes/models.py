@@ -3,9 +3,10 @@ from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
 from decimal import Decimal
+from apps.utils.models import ModeloBase
 
 
-class Comprobante(models.Model):
+class Comprobante(ModeloBase):
     """
     Comprobante electrónico (Factura, Boleta o Nota de Crédito).
 
@@ -59,13 +60,6 @@ class Comprobante(models.Model):
         related_name='comprobantes',
         verbose_name='Empresa'
     )
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='comprobantes_creados',
-        verbose_name='Creado por'
-    )
 
     # ── Montos calculados ─────────────────────────────────────────
     subtotal = models.DecimalField(
@@ -95,10 +89,6 @@ class Comprobante(models.Model):
     xml_firmado = models.TextField(blank=True, verbose_name='XML Firmado')
     hash_cpe = models.CharField(max_length=64, blank=True, verbose_name='Hash CPE')
 
-    # ── Auditoría ─────────────────────────────────────────────────
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
     class Meta:
         verbose_name = 'Comprobante'
         verbose_name_plural = 'Comprobantes'
@@ -127,16 +117,16 @@ class Comprobante(models.Model):
         }
         return mapa.get(self.tipo, '01')
 
-    def delete(self, *args, **kwargs):
-        """Comprobante ACEPTADO no se puede eliminar."""
+    def eliminar(self, usuario=None):
+        """Comprobante ACEPTADO no se puede eliminar (soft delete)."""
         if self.estado == self.EstadoComprobante.ACEPTADO:
             raise ValidationError(
                 'No se puede eliminar un comprobante ACEPTADO. Use una Nota de Crédito para anularlo.'
             )
-        super().delete(*args, **kwargs)
+        super().eliminar(usuario=usuario)
 
 
-class DetalleComprobante(models.Model):
+class DetalleComprobante(ModeloBase):
     """
     Línea de detalle de un comprobante.
 
@@ -194,7 +184,7 @@ class DetalleComprobante(models.Model):
         return f"{self.producto.descripcion} x{self.cantidad} = S/.{self.subtotal}"
 
 
-class NotaCredito(models.Model):
+class NotaCredito(ModeloBase):
     """
     Nota de crédito que referencia un comprobante original.
 
@@ -256,7 +246,7 @@ class NotaCredito(models.Model):
                 })
 
 
-class LogEnvioSUNAT(models.Model):
+class LogEnvioSUNAT(ModeloBase):
     """
     Registro de cada intento de envío al OSE (Operador de Servicios Electrónicos).
     Permite trazabilidad completa del ciclo de vida del comprobante ante SUNAT.

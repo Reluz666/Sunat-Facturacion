@@ -105,7 +105,7 @@ def generar_xml_comprobante(comprobante):
         </Invoice>
     """
     # Cargar relaciones necesarias
-    detalles = comprobante.detalles.select_related('producto').all()
+    detalles = comprobante.detalles
     empresa = comprobante.empresa
     cliente = comprobante.cliente
 
@@ -167,7 +167,7 @@ def generar_xml_comprobante(comprobante):
         # Recuperar la nota de crédito de forma segura, incluso si la caché del objeto no la tiene
         from apps.comprobantes.models import NotaCredito
         try:
-            nota_info = NotaCredito.objects.get(comprobante_nota=comprobante)
+            nota_info = NotaCredito.objects.get(comprobante_nota_id=comprobante.id)
             # DiscrepancyResponse
             discrepancy = _cac(invoice, 'DiscrepancyResponse')
             _cbc(discrepancy, 'ReferenceID', nota_info.comprobante_referencia.serie_numero)

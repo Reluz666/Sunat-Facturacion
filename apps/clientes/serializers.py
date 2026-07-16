@@ -11,7 +11,7 @@ class ClienteSerializer(serializers.ModelSerializer):
 
 
 class ClienteViewSet(viewsets.ModelViewSet):
-    queryset = Cliente.objects.all()
+    queryset = Cliente.activos.all()
     serializer_class = ClienteSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['tipo_doc']

@@ -8,83 +8,88 @@
       "nombre_comercial": "DigiPerú",
       "direccion": "Av. La Tecnología 456, San Isidro, Lima",
       "regimen_tributario": "GENERAL",
-      "created_at": "2026-01-01T00:00:00Z",
-      "updated_at": "2026-01-01T00:00:00Z"
+      "creado_en": "2026-01-01T00:00:00Z",
+      "actualizado_en": "2026-01-01T00:00:00Z"
     }
   },
   {
     "model": "empresa.seriecomprobante",
     "pk": 1,
-    "fields": { "empresa": 1, "tipo": "F", "serie": "F001", "correlativo_actual": 0 }
+    "fields": { "empresa": 1, "tipo": "F", "serie": "F001", "correlativo_actual": 0, "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "empresa.seriecomprobante",
     "pk": 2,
-    "fields": { "empresa": 1, "tipo": "B", "serie": "B001", "correlativo_actual": 0 }
+    "fields": { "empresa": 1, "tipo": "B", "serie": "B001", "correlativo_actual": 0, "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "empresa.seriecomprobante",
     "pk": 3,
-    "fields": { "empresa": 1, "tipo": "FC", "serie": "FC01", "correlativo_actual": 0 }
+    "fields": { "empresa": 1, "tipo": "FC", "serie": "FC01", "correlativo_actual": 0, "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
+  },
+  {
+    "model": "empresa.seriecomprobante",
+    "pk": 4,
+    "fields": { "empresa": 1, "tipo": "BC", "serie": "BC01", "correlativo_actual": 0, "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "clientes.cliente",
     "pk": 1,
-    "fields": { "tipo_doc": "RUC", "num_doc": "20505050505", "razon_social": "Corporación Tecnológica SAC", "direccion": "Av. Javier Prado 1234, Lima", "email": "contacto@corptech.pe", "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" }
+    "fields": { "tipo_doc": "RUC", "num_doc": "20505050505", "razon_social": "Corporación Tecnológica SAC", "direccion": "Av. Javier Prado 1234, Lima", "email": "contacto@corptech.pe", "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "clientes.cliente",
     "pk": 2,
-    "fields": { "tipo_doc": "RUC", "num_doc": "20303030303", "razon_social": "Industrias del Norte EIRL", "direccion": "Jr. Comercio 567, Chiclayo", "email": "ventas@indnorte.pe", "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" }
+    "fields": { "tipo_doc": "RUC", "num_doc": "20303030303", "razon_social": "Industrias del Norte EIRL", "direccion": "Jr. Comercio 567, Chiclayo", "email": "ventas@indnorte.pe", "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "clientes.cliente",
     "pk": 3,
-    "fields": { "tipo_doc": "DNI", "num_doc": "70123456", "razon_social": "María García López", "direccion": "Calle Los Pinos 890, Trujillo", "email": "maria.garcia@gmail.com", "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" }
+    "fields": { "tipo_doc": "DNI", "num_doc": "70123456", "razon_social": "María García López", "direccion": "Calle Los Pinos 890, Trujillo", "email": "maria.garcia@gmail.com", "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "clientes.cliente",
     "pk": 4,
-    "fields": { "tipo_doc": "DNI", "num_doc": "45678901", "razon_social": "Carlos Mendoza Rivera", "direccion": "Av. Grau 123, Arequipa", "email": "cmendoza@hotmail.com", "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" }
+    "fields": { "tipo_doc": "DNI", "num_doc": "45678901", "razon_social": "Carlos Mendoza Rivera", "direccion": "Av. Grau 123, Arequipa", "email": "cmendoza@hotmail.com", "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "clientes.cliente",
     "pk": 5,
-    "fields": { "tipo_doc": "RUC", "num_doc": "20707070707", "razon_social": "Distribuidora Central SAC", "direccion": "Av. Argentina 2345, Callao", "email": "admin@distcentral.pe", "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" }
+    "fields": { "tipo_doc": "RUC", "num_doc": "20707070707", "razon_social": "Distribuidora Central SAC", "direccion": "Av. Argentina 2345, Callao", "email": "admin@distcentral.pe", "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "productos.producto",
     "pk": 1,
-    "fields": { "codigo": "SERV001", "descripcion": "Servicio de Consultoría TI", "unidad_medida": "ZZ", "precio_unitario": "350.00", "afecto_igv": true, "activo": true, "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" }
+    "fields": { "codigo": "SERV001", "descripcion": "Servicio de Consultoría TI", "unidad_medida": "ZZ", "precio_unitario": "350.00", "afecto_igv": true, "activo": true, "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "productos.producto",
     "pk": 2,
-    "fields": { "codigo": "PROD001", "descripcion": "Laptop HP ProBook 450 G10", "unidad_medida": "NIU", "precio_unitario": "3200.00", "afecto_igv": true, "activo": true, "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" }
+    "fields": { "codigo": "PROD001", "descripcion": "Laptop HP ProBook 450 G10", "unidad_medida": "NIU", "precio_unitario": "3200.00", "afecto_igv": true, "activo": true, "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "productos.producto",
     "pk": 3,
-    "fields": { "codigo": "PROD002", "descripcion": "Monitor LG 27\" 4K UltraHD", "unidad_medida": "NIU", "precio_unitario": "1450.00", "afecto_igv": true, "activo": true, "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" }
+    "fields": { "codigo": "PROD002", "descripcion": "Monitor LG 27\" 4K UltraHD", "unidad_medida": "NIU", "precio_unitario": "1450.00", "afecto_igv": true, "activo": true, "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "productos.producto",
     "pk": 4,
-    "fields": { "codigo": "PROD003", "descripcion": "Teclado Mecánico Logitech MX Keys", "unidad_medida": "NIU", "precio_unitario": "420.00", "afecto_igv": true, "activo": true, "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" }
+    "fields": { "codigo": "PROD003", "descripcion": "Teclado Mecánico Logitech MX Keys", "unidad_medida": "NIU", "precio_unitario": "420.00", "afecto_igv": true, "activo": true, "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "productos.producto",
     "pk": 5,
-    "fields": { "codigo": "SERV002", "descripcion": "Mantenimiento Preventivo de Equipos", "unidad_medida": "ZZ", "precio_unitario": "150.00", "afecto_igv": true, "activo": true, "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" }
+    "fields": { "codigo": "SERV002", "descripcion": "Mantenimiento Preventivo de Equipos", "unidad_medida": "ZZ", "precio_unitario": "150.00", "afecto_igv": true, "activo": true, "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "productos.producto",
     "pk": 6,
-    "fields": { "codigo": "PROD004", "descripcion": "Cable de Red Cat6 (por metro)", "unidad_medida": "MTR", "precio_unitario": "3.50", "afecto_igv": true, "activo": true, "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" }
+    "fields": { "codigo": "PROD004", "descripcion": "Cable de Red Cat6 (por metro)", "unidad_medida": "MTR", "precio_unitario": "3.50", "afecto_igv": true, "activo": true, "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   },
   {
     "model": "productos.producto",
     "pk": 7,
-    "fields": { "codigo": "SERV003", "descripcion": "Capacitación en Seguridad Informática", "unidad_medida": "ZZ", "precio_unitario": "800.00", "afecto_igv": false, "activo": true, "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" }
+    "fields": { "codigo": "SERV003", "descripcion": "Capacitación en Seguridad Informática", "unidad_medida": "ZZ", "precio_unitario": "800.00", "afecto_igv": false, "activo": true, "creado_en": "2026-01-01T00:00:00Z", "actualizado_en": "2026-01-01T00:00:00Z" }
   }
 ]
