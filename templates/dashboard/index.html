@@ -79,19 +79,27 @@
 <div class="row g-4 mb-4">
   <div class="col-12 fade-in-up">
     <div class="chart-card">
-      <div class="card-header-title">
-        <i class="bi bi-pie-chart-fill"></i>
-        Tipos de Comprobantes
+      <div class="chart-card-header">
+        <div class="chart-card-header-icon">
+          <i class="bi bi-pie-chart-fill"></i>
+        </div>
+        <div class="chart-card-header-text">
+          <div class="chart-card-header-title">Tipos de Comprobantes</div>
+          <div class="chart-card-header-subtitle">Distribución de documentos emitidos</div>
+        </div>
       </div>
       <div class="chart-card-body">
-        <div class="chart-donut-wrap">
-          <canvas id="chartTipos"></canvas>
-          <div class="chart-center-text">
-            <div class="chart-center-value">{{ chart_total }}</div>
-            <div class="chart-center-label">Comprobantes</div>
+        <div class="chart-card-left">
+          <div class="chart-donut-wrap">
+            <canvas id="chartTipos"></canvas>
+            <div class="chart-center-text">
+              <div class="chart-center-suptitle">Total</div>
+              <div class="chart-center-value">{{ chart_total }}</div>
+              <div class="chart-center-label">Comprobantes</div>
+            </div>
           </div>
         </div>
-        <div class="chart-legend" id="chartLegend"></div>
+        <div class="chart-card-right" id="chartLegend"></div>
       </div>
     </div>
   </div>
@@ -169,7 +177,8 @@
 <script>
 (function() {
   var raw = {{ chart_data|safe }};
-  var colors = raw.colors;
+  var colors = ['#3B82F6', '#10B981', '#F59E0B'];
+  var icons = ['bi-file-earmark-text', 'bi-receipt', 'bi-arrow-return-left'];
   var labels = raw.labels;
   var data = raw.data;
   var pcts = raw.percentages;
@@ -178,21 +187,31 @@
   var legendEl = document.getElementById('chartLegend');
   if (legendEl) {
     legendEl.innerHTML = labels.map(function(label, i) {
-      var icons = ['bi-file-earmark-text', 'bi-receipt', 'bi-arrow-return-left'];
-      return '<div class="legend-item" data-index="' + i + '">' +
-        '<span class="legend-dot" style="background:' + colors[i] + '"></span>' +
-        '<div class="legend-info">' +
-        '<span class="legend-label"><i class="bi ' + icons[i] + ' me-1" style="color:' + colors[i] + ';font-size:0.75rem"></i>' + label + '</span>' +
-        '<div class="legend-numbers">' +
-        '<span class="legend-qty">' + data[i] + '</span>' +
-        '<span class="legend-pct">' + pcts[i] + '%</span>' +
-        '</div></div></div>';
+      return '<div class="legend-item" data-index="' + i + '" style="--legend-color:' + colors[i] + '">' +
+        '<div class="legend-dot-wrap">' +
+          '<span class="legend-dot" style="background:' + colors[i] + '"></span>' +
+          '<i class="bi ' + icons[i] + ' legend-dot-icon" style="color:' + colors[i] + '"></i>' +
+        '</div>' +
+        '<div class="legend-content">' +
+          '<div class="legend-top-row">' +
+            '<span class="legend-label">' + label + '</span>' +
+            '<div class="legend-stats">' +
+              '<span class="legend-qty">' + data[i] + '</span>' +
+              '<span class="legend-pct">' + pcts[i] + '%</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="legend-bar-track">' +
+            '<div class="legend-bar-fill" style="width:' + pcts[i] + '%;background:' + colors[i] + ';--legend-color:' + colors[i] + '"></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
     }).join('');
   }
 
   var ctx = document.getElementById('chartTipos');
+  var chart = null;
   if (ctx && total > 0) {
-    new Chart(ctx, {
+    chart = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: labels,
@@ -200,11 +219,13 @@
           data: data,
           backgroundColor: colors,
           borderWidth: 0,
-          hoverOffset: 8,
+          borderRadius: 4,
+          spacing: 2,
+          hoverOffset: 12,
         }]
       },
       options: {
-        cutout: '78%',
+        cutout: '80%',
         responsive: true,
         maintainAspectRatio: true,
         plugins: {
@@ -212,10 +233,11 @@
           tooltip: {
             backgroundColor: '#1E293B',
             titleColor: '#f8fafc',
-            bodyColor: '#94a3b8',
-            padding: 10,
-            cornerRadius: 8,
+            bodyColor: '#cbd5e1',
+            padding: 12,
+            cornerRadius: 10,
             displayColors: true,
+            boxPadding: 4,
             callbacks: {
               label: function(context) {
                 return ' ' + context.label + ': ' + context.parsed + ' (' + pcts[context.dataIndex] + '%)';
@@ -225,12 +247,41 @@
         },
         animation: {
           animateRotate: true,
-          duration: 1200,
+          duration: 1400,
           easing: 'easeOutQuart',
+        },
+        hover: {
+          mode: 'index',
+          intersect: true,
+        },
+        onHover: function(event, elements) {
+          var items = document.querySelectorAll('.legend-item');
+          items.forEach(function(el) { el.classList.remove('is-highlighted'); });
+          if (elements && elements.length > 0) {
+            var idx = elements[0].index;
+            var target = document.querySelector('.legend-item[data-index="' + idx + '"]');
+            if (target) { target.classList.add('is-highlighted'); }
+          }
         }
       }
     });
   }
+
+  document.querySelectorAll('.legend-item').forEach(function(el) {
+    el.addEventListener('mouseenter', function() {
+      var idx = parseInt(this.getAttribute('data-index'));
+      if (chart) {
+        chart.setActiveElements([{ datasetIndex: 0, index: idx }]);
+        chart.draw();
+      }
+    });
+    el.addEventListener('mouseleave', function() {
+      if (chart) {
+        chart.setActiveElements([]);
+        chart.draw();
+      }
+    });
+  });
 })();
 </script>
 {% endblock %}
