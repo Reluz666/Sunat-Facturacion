@@ -1024,31 +1024,38 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-.legend-stats {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
 .legend-qty {
   font-size: 0.78rem;
   font-weight: 700;
   color: #f8fafc;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  flex-shrink: 0;
+}
+
+.legend-qty-label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #64748b;
 }
 
 .legend-pct {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #64748b;
-  min-width: 32px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #94a3b8;
+  min-width: 34px;
   text-align: right;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  flex-shrink: 0;
+}
+
+.legend-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .legend-bar-track {
-  width: 100%;
+  flex: 1;
   height: 4px;
   border-radius: 4px;
   background: rgba(30,41,59,0.6);

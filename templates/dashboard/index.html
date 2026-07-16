@@ -195,13 +195,13 @@
         '<div class="legend-content">' +
           '<div class="legend-top-row">' +
             '<span class="legend-label">' + label + '</span>' +
-            '<div class="legend-stats">' +
-              '<span class="legend-qty">' + data[i] + '</span>' +
-              '<span class="legend-pct">' + pcts[i] + '%</span>' +
-            '</div>' +
+            '<span class="legend-qty">' + data[i] + ' <span class="legend-qty-label">documentos</span></span>' +
           '</div>' +
-          '<div class="legend-bar-track">' +
-            '<div class="legend-bar-fill" style="width:' + pcts[i] + '%;background:' + colors[i] + ';--legend-color:' + colors[i] + '"></div>' +
+          '<div class="legend-bar-row">' +
+            '<div class="legend-bar-track">' +
+              '<div class="legend-bar-fill" style="width:' + pcts[i] + '%;background:' + colors[i] + ';--legend-color:' + colors[i] + '"></div>' +
+            '</div>' +
+            '<span class="legend-pct">' + pcts[i] + '%</span>' +
           '</div>' +
         '</div>' +
       '</div>';
